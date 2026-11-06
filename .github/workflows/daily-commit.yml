@@ -28,22 +28,29 @@ jobs:
           echo "=== Git tree ==="
           git ls-tree -r HEAD --name-only
 
-      - name: Update daily log and commit
+      - name: Append date to README.md and commit
         run: |
           TIMESTAMP_IST=$(TZ=Asia/Kolkata date '+%Y-%m-%d %H:%M:%S IST')
           TIMESTAMP_UTC=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          echo "Daily check at ${TIMESTAMP_IST} (${TIMESTAMP_UTC})" > daily-log.txt
-          echo "" >> daily-log.txt
-          echo "Files present:" >> daily-log.txt
-          git ls-tree -r HEAD --name-only >> daily-log.txt || true
+          DATE_ONLY=$(TZ=Asia/Kolkata date '+%Y-%m-%d')
+
+          # Ensure a Daily updates section exists at the end of README.md
+          if ! grep -q "## Daily updates" README.md; then
+            echo "" >> README.md
+            echo "## Daily updates" >> README.md
+            echo "" >> README.md
+          fi
+
+          # Append the new date entry
+          echo "- **${DATE_ONLY}** — checked and committed at ${TIMESTAMP_IST} (${TIMESTAMP_UTC})" >> README.md
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add daily-log.txt
+          git add README.md
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: daily commit at 4AM IST - ${TIMESTAMP_IST} [skip ci]"
+            git commit -m "chore: daily README update at 4AM IST - ${TIMESTAMP_IST} [skip ci]"
             git push
           fi

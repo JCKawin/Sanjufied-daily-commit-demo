@@ -4,7 +4,7 @@ This repository demonstrates a GitHub Action that:
 
 1. Runs every day at **4:00 AM IST** (Asia/Kolkata)
 2. Checks the current contents of the repository
-3. Updates `daily-log.txt` with a timestamp and file list
+3. Appends a dated entry to the end of this README.md
 4. Commits and pushes the change
 
 ## Workflow file
@@ -18,3 +18,6 @@ See `.github/workflows/daily-commit.yml`
 - You can also trigger it manually from the Actions tab.
 
 To use this in another repository, copy the workflow file into `.github/workflows/`.
+
+## Daily updates
+
