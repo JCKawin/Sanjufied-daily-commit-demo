@@ -1,0 +1,49 @@
+name: Daily Repo Check & Commit
+
+on:
+  schedule:
+    # Runs every day at 4:00 AM IST (Asia/Kolkata)
+    # Note: GitHub may delay runs slightly near the top of the hour under load.
+    - cron: '0 4 * * *'
+      timezone: 'Asia/Kolkata'
+  workflow_dispatch:  # Allow manual trigger from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check what's in the repo
+        run: |
+          echo "=== Repository contents (non-hidden, excluding .git) ==="
+          find . -not -path '*/\.*' -type f | head -100
+          echo ""
+          echo "=== Git tree ==="
+          git ls-tree -r HEAD --name-only
+
+      - name: Update daily log and commit
+        run: |
+          TIMESTAMP_IST=$(TZ=Asia/Kolkata date '+%Y-%m-%d %H:%M:%S IST')
+          TIMESTAMP_UTC=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          echo "Daily check at ${TIMESTAMP_IST} (${TIMESTAMP_UTC})" > daily-log.txt
+          echo "" >> daily-log.txt
+          echo "Files present:" >> daily-log.txt
+          git ls-tree -r HEAD --name-only >> daily-log.txt || true
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add daily-log.txt
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: daily commit at 4AM IST - ${TIMESTAMP_IST} [skip ci]"
+            git push
+          fi
